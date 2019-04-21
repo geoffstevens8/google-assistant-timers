@@ -1,27 +1,43 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as WebRequest from 'web-request';
+import { IP_ADDRESS } from "./constants";
+let myStatusBarItem: vscode.StatusBarItem;
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-		console.log('Congratulations, your extension "google-assistant-timers" is now active!');
+	console.log('Google Assistant Timers  active');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
+	myStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	myStatusBarItem.command = 'extension.helloWorld';
+	context.subscriptions.push(myStatusBarItem);
+
 	let disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World!');
+		(async function () {
+			var url = "http://" + IP_ADDRESS + ":8008/setup/assistant/alarms";
+			var result = await WebRequest.json<any>(url);
+			console.log(result.timer);
+
+			var remaining = result.timer[0].fire_time - Date.now();
+			var hours = Math.floor(remaining / (60 * 60 * 1000));
+    		var minutes = Math.floor(
+      			(remaining % (60 * 60 * 1000)) / (60 * 1000)
+    		);
+    		var sec = Math.floor(
+      			((remaining % (60 * 60 * 1000)) % (60 * 1000)) / 1000
+			);
+			console.log(hours);
+			console.log(minutes);
+			console.log(sec);
+			
+			myStatusBarItem.text = `${hours} ${minutes} ${sec} left`;
+			myStatusBarItem.show();
+		
+		})();
+
 	});
 
 	context.subscriptions.push(disposable);
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() {}
